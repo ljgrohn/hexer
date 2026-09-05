@@ -62,7 +62,11 @@ pub fn pixel_at(x: i32, y: i32) -> Option<[u8; 3]> {
         if c == CLR_INVALID {
             return None;
         }
-        Some([(c & 0xFF) as u8, ((c >> 8) & 0xFF) as u8, ((c >> 16) & 0xFF) as u8])
+        Some([
+            (c & 0xFF) as u8,
+            ((c >> 8) & 0xFF) as u8,
+            ((c >> 16) & 0xFF) as u8,
+        ])
     }
 }
 
@@ -110,7 +114,14 @@ pub fn hotkey_loop(tx: Sender<HotkeyEvent>, wake: impl Fn() + Send + 'static) {
     // SAFETY: registering a thread-scoped hotkey (hwnd = None) and pumping
     // messages on the same thread is the documented usage.
     unsafe {
-        if RegisterHotKey(None, HOTKEY_ID, MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT, VK_C).is_err() {
+        if RegisterHotKey(
+            None,
+            HOTKEY_ID,
+            MOD_CONTROL | MOD_SHIFT | MOD_NOREPEAT,
+            VK_C,
+        )
+        .is_err()
+        {
             eprintln!("hexer: could not register {HOTKEY_LABEL} (already in use?)");
             return;
         }
