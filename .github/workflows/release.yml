@@ -1,0 +1,88 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    name: Package Windows app
+    runs-on: windows-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Install Rust
+        run: rustup toolchain install stable --profile minimal
+
+      - name: Use stable Rust
+        run: rustup default stable
+
+      - name: Read and validate version
+        id: package
+        shell: pwsh
+        run: |
+          $metadata = cargo metadata --no-deps --format-version 1 | ConvertFrom-Json
+          $package = $metadata.packages | Where-Object name -eq "hexer"
+          if (-not $package) {
+            throw "Could not find the hexer package in Cargo metadata."
+          }
+
+          $version = $package.version
+          if ($env:GITHUB_REF_TYPE -eq "tag" -and $env:GITHUB_REF_NAME -ne "v$version") {
+            throw "Tag $env:GITHUB_REF_NAME does not match Cargo.toml version $version. Expected v$version."
+          }
+
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "archive=hexer-$version-windows-x86_64.zip" >> $env:GITHUB_OUTPUT
+
+      - name: Test
+        run: cargo test --locked
+
+      - name: Build release executable
+        run: cargo build --release --locked
+
+      - name: Create portable package and checksum
+        shell: pwsh
+        run: |
+          $version = "${{ steps.package.outputs.version }}"
+          $packageDirectory = "dist/hexer-$version-windows-x86_64"
+          $archive = "dist/${{ steps.package.outputs.archive }}"
+
+          New-Item -ItemType Directory -Force -Path $packageDirectory | Out-Null
+          Copy-Item target/release/hexer.exe, README.md -Destination $packageDirectory
+          Compress-Archive -Path "$packageDirectory/*" -DestinationPath $archive
+
+          $hash = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()
+          "$hash  ${{ steps.package.outputs.archive }}" |
+            Set-Content -Encoding ascii "$archive.sha256"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: hexer-${{ steps.package.outputs.version }}-windows-x86_64
+          path: |
+            dist/${{ steps.package.outputs.archive }}
+            dist/${{ steps.package.outputs.archive }}.sha256
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARCHIVE: dist/${{ steps.package.outputs.archive }}
+          CHECKSUM: dist/${{ steps.package.outputs.archive }}.sha256
+          VERSION: ${{ steps.package.outputs.version }}
+        run: >-
+          gh release create $env:GITHUB_REF_NAME
+          $env:ARCHIVE
+          $env:CHECKSUM
+          --verify-tag
+          --generate-notes
+          --title "Hexer $env:VERSION"

@@ -3,6 +3,9 @@ name = "hexer"
 version = "0.1.0"
 edition = "2024"
 description = "Super simple Windows color picker: point at a pixel, get its codes."
+repository = "https://github.com/ljgrohn/hexer"
+readme = "README.md"
+publish = false
 
 [dependencies]
 eframe = "0.36"
