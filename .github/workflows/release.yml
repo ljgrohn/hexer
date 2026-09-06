@@ -56,7 +56,9 @@ jobs:
           $archive = "dist/${{ steps.package.outputs.archive }}"
 
           New-Item -ItemType Directory -Force -Path $packageDirectory | Out-Null
+          New-Item -ItemType Directory -Force -Path "$packageDirectory/assets" | Out-Null
           Copy-Item target/release/hexer.exe, README.md -Destination $packageDirectory
+          Copy-Item assets/hexer.png -Destination "$packageDirectory/assets"
           Compress-Archive -Path "$packageDirectory/*" -DestinationPath $archive
 
           $hash = (Get-FileHash -Algorithm SHA256 $archive).Hash.ToLowerInvariant()

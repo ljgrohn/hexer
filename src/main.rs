@@ -52,6 +52,7 @@ fn main() -> eframe::Result {
 
     let viewport = egui::ViewportBuilder::default()
         .with_title("hexer")
+        .with_icon(app_icon())
         .with_inner_size([WINDOW_WIDTH, PICKER_HEIGHT])
         .with_min_inner_size([WINDOW_WIDTH, PICKER_HEIGHT])
         .with_resizable(false)
@@ -65,6 +66,18 @@ fn main() -> eframe::Result {
         options,
         Box::new(|cc| Ok(Box::new(Hexer::new(cc)))),
     )
+}
+
+fn app_icon() -> egui::IconData {
+    let image = image::load_from_memory(include_bytes!("../assets/hexer.png"))
+        .expect("embedded Hexer icon should be a valid PNG")
+        .into_rgba8();
+    let (width, height) = image.dimensions();
+    egui::IconData {
+        rgba: image.into_raw(),
+        width,
+        height,
+    }
 }
 
 struct Hexer {

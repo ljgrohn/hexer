@@ -1,6 +1,6 @@
 [package]
 name = "hexer"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Super simple Windows color picker: point at a pixel, get its codes."
 repository = "https://github.com/ljgrohn/hexer"
@@ -10,6 +10,7 @@ publish = false
 [dependencies]
 eframe = "0.36"
 egui = "0.36"
+image = { version = "0.25", default-features = false, features = ["png"] }
 
 [dependencies.windows]
 version = "0.62"
@@ -21,6 +22,9 @@ features = [
     "Win32_UI_WindowsAndMessaging",
     "Win32_UI_Input_KeyboardAndMouse",
 ]
+
+[target.'cfg(windows)'.build-dependencies]
+embed-resource = "3.0"
 
 [profile.release]
 opt-level = "z"

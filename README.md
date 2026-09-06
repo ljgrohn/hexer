@@ -1,5 +1,9 @@
 # hexer
 
+<p align="center">
+  <img src="assets/hexer.png" width="96" height="96" alt="Hexer logo">
+</p>
+
 Polished Windows-native color picker and palette helper. Point at any pixel, get its HEX / RGB / HSL,
 then turn it into a coordinated color theme.
 
